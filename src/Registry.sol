@@ -57,13 +57,32 @@ contract Registry is IERC6551Registry {
         return _account;
     }
 
+    /**
+     * @dev Returns the computed token bound account address for a non-fungible token.
+     *
+     * @return _account The address of the token bound account
+     */
     function account(
         address implementation,
         bytes32 salt,
         uint256 chainId,
         address tokenContract,
         uint256 tokenId
-    ) external view returns (address _account) {}
+    ) external view returns (address _account) {
+        bytes memory code = _accountCreationCode(
+            implementation,
+            salt,
+            chainId,
+            tokenContract,
+            tokenId
+        );
+        bytes32 codeHash = keccak256(code);
+        return Create2.computeAddress(salt, codeHash);
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                            HELPER FUNCTION
+    //////////////////////////////////////////////////////////////*/
 
     function _accountCreationCode(
         address implementation,
