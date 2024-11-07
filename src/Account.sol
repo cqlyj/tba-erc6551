@@ -22,6 +22,12 @@ contract Account is IERC6551Account, IERC6551Executable, IERC165, IERC1271 {
     uint256 immutable i_deploymentChainId = block.chainid;
 
     /*//////////////////////////////////////////////////////////////
+                                 ERRORS
+    //////////////////////////////////////////////////////////////*/
+    error Account__InvalidSigner();
+    error Account__OnlyCallOperationAllowed();
+
+    /*//////////////////////////////////////////////////////////////
                            IERC6551EXECUTABLE
     //////////////////////////////////////////////////////////////*/
 
@@ -43,14 +49,35 @@ contract Account is IERC6551Account, IERC6551Executable, IERC165, IERC1271 {
      * @param value     The Ether value to be sent to the target
      * @param data      The encoded operation calldata
      * @param operation A value indicating the type of operation to perform
-     * @return The result of the operation
+     * @return result The result of the operation
      */
     function execute(
         address to,
         uint256 value,
         bytes calldata data,
         uint8 operation
-    ) external payable returns (bytes memory) {}
+    ) external payable returns (bytes memory result) {
+        if (!_isValidSigner(msg.sender)) {
+            revert Account__InvalidSigner();
+        }
+
+        // for now, let's say only calls are allowed
+        if (operation != 0) {
+            revert Account__OnlyCallOperationAllowed();
+        }
+
+        // modify the account state
+        s_state++;
+
+        bool success;
+        (success, result) = to.call{value: value}(data);
+
+        if (!success) {
+            assembly {
+                revert(add(result, 32), mload(result))
+            }
+        }
+    }
 
     /*//////////////////////////////////////////////////////////////
                             IERC6551ACCOUNT
