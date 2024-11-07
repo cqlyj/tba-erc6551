@@ -5,7 +5,8 @@ import {IERC6551Account} from "lib/erc6551/src/interfaces/IERC6551Account.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
 import {IERC6551Executable} from "lib/erc6551/src/interfaces/IERC6551Executable.sol";
-import {MyNft} from "./MyNft.sol";
+import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/SignatureChecker.sol";
 
 // All token bound accounts SHOULD be created via the singleton registry.
 
@@ -18,6 +19,7 @@ contract Account is IERC6551Account, IERC6551Executable, IERC165, IERC1271 {
                                VARIABLES
     //////////////////////////////////////////////////////////////*/
     uint256 private s_state;
+    uint256 immutable i_deploymentChainId = block.chainid;
 
     /*//////////////////////////////////////////////////////////////
                            IERC6551EXECUTABLE
@@ -74,7 +76,7 @@ contract Account is IERC6551Account, IERC6551Executable, IERC165, IERC1271 {
      * @return tokenId       The ID of the token
      */
     function token()
-        external
+        public
         view
         returns (uint256 chainId, address tokenContract, uint256 tokenId)
     {
@@ -110,15 +112,20 @@ contract Account is IERC6551Account, IERC6551Executable, IERC165, IERC1271 {
      * signer or grants signing permissions to other non-holder accounts.
      *
      * @param  signer     The address to check signing authorization for
-     * @param  context    Additional data used to determine whether the signer is valid
+     * param  context    Additional data used to determine whether the signer is valid
      * @return magicValue Magic value indicating whether the signer is valid
      */
 
     // for now just say that the holder of the NFT is a valid signer
     function isValidSigner(
         address signer,
-        bytes calldata context
-    ) external view returns (bytes4 magicValue) {}
+        bytes calldata /*context*/
+    ) external view returns (bytes4 magicValue) {
+        if (_isValidSigner(signer)) {
+            return IERC6551Account.isValidSigner.selector; // 0x523e3260
+        }
+        return bytes4(0);
+    }
 
     /*//////////////////////////////////////////////////////////////
                                 IERC165
@@ -134,7 +141,12 @@ contract Account is IERC6551Account, IERC6551Executable, IERC165, IERC1271 {
      */
     function supportsInterface(
         bytes4 interfaceId
-    ) external view returns (bool) {}
+    ) external pure returns (bool) {
+        return
+            interfaceId == type(IERC165).interfaceId ||
+            interfaceId == type(IERC6551Account).interfaceId ||
+            interfaceId == type(IERC6551Executable).interfaceId;
+    }
 
     /*//////////////////////////////////////////////////////////////
                                 IERC1271
@@ -148,5 +160,32 @@ contract Account is IERC6551Account, IERC6551Executable, IERC165, IERC1271 {
     function isValidSignature(
         bytes32 hash,
         bytes memory signature
-    ) external view returns (bytes4 magicValue) {}
+    ) external view returns (bytes4 magicValue) {
+        bool isValid = SignatureChecker.isValidSignatureNow(
+            getOwner(),
+            hash,
+            signature
+        );
+
+        if (isValid) {
+            return IERC1271.isValidSignature.selector;
+        }
+
+        return bytes4(0);
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                            HELPER FUNCTIONS
+    //////////////////////////////////////////////////////////////*/
+    function getOwner() public view returns (address) {
+        (uint256 chainId, address tokenContract, uint256 tokenId) = token();
+        if (chainId != i_deploymentChainId) {
+            return address(0);
+        }
+        return IERC721(tokenContract).ownerOf(tokenId);
+    }
+
+    function _isValidSigner(address signer) internal view returns (bool) {
+        return signer == getOwner();
+    }
 }
