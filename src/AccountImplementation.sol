@@ -14,7 +14,7 @@ import {SignatureChecker} from "@openzeppelin/contracts/utils/cryptography/Signa
 
 // All token bound account implementations MUST implement ERC-1271 signature validation.
 
-contract Account is IERC6551Account, IERC6551Executable, IERC165, IERC1271 {
+contract AccountImplementation is IERC6551Account, IERC6551Executable, IERC165, IERC1271 {
     /*//////////////////////////////////////////////////////////////
                                VARIABLES
     //////////////////////////////////////////////////////////////*/
