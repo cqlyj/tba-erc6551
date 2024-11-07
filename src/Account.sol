@@ -4,6 +4,8 @@ pragma solidity 0.8.25;
 import {IERC6551Account} from "lib/erc6551/src/interfaces/IERC6551Account.sol";
 import {IERC165} from "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
+import {IERC6551Executable} from "lib/erc6551/src/interfaces/IERC6551Executable.sol";
+import {MyNft} from "./MyNft.sol";
 
 // All token bound accounts SHOULD be created via the singleton registry.
 
@@ -11,7 +13,43 @@ import {IERC1271} from "@openzeppelin/contracts/interfaces/IERC1271.sol";
 
 // All token bound account implementations MUST implement ERC-1271 signature validation.
 
-contract Account is IERC6551Account, IERC165, IERC1271 {
+contract Account is IERC6551Account, IERC6551Executable, IERC165, IERC1271 {
+    /*//////////////////////////////////////////////////////////////
+                               VARIABLES
+    //////////////////////////////////////////////////////////////*/
+    uint256 private s_state;
+
+    /*//////////////////////////////////////////////////////////////
+                           IERC6551EXECUTABLE
+    //////////////////////////////////////////////////////////////*/
+
+    /**
+     * @dev Executes a low-level operation if the caller is a valid signer on the account.
+     *
+     * Reverts and bubbles up error if operation fails.
+     *
+     * Accounts implementing this interface MUST accept the following operation parameter values:
+     * - 0 = CALL
+     * - 1 = DELEGATECALL
+     * - 2 = CREATE
+     * - 3 = CREATE2
+     *
+     * Accounts implementing this interface MAY support additional operations or restrict a signer's
+     * ability to execute certain operations.
+     *
+     * @param to        The target address of the operation
+     * @param value     The Ether value to be sent to the target
+     * @param data      The encoded operation calldata
+     * @param operation A value indicating the type of operation to perform
+     * @return The result of the operation
+     */
+    function execute(
+        address to,
+        uint256 value,
+        bytes calldata data,
+        uint8 operation
+    ) external payable returns (bytes memory) {}
+
     /*//////////////////////////////////////////////////////////////
                             IERC6551ACCOUNT
     //////////////////////////////////////////////////////////////*/
@@ -39,14 +77,25 @@ contract Account is IERC6551Account, IERC165, IERC1271 {
         external
         view
         returns (uint256 chainId, address tokenContract, uint256 tokenId)
-    {}
+    {
+        // https://eips.ethereum.org/EIPS/eip-6551#reference-implementation
+        bytes memory footer = new bytes(0x60);
+
+        assembly {
+            extcodecopy(address(), add(footer, 0x20), 0x4d, 0x60)
+        }
+
+        return abi.decode(footer, (uint256, address, uint256));
+    }
 
     /**
      * @dev Returns a value that SHOULD be modified each time the account changes state.
      *
      * @return The current account state
      */
-    function state() external view returns (uint256) {}
+    function state() external view returns (uint256) {
+        return s_state;
+    }
 
     /**
      * @dev Returns a magic value indicating whether a given signer is authorized to act on behalf
@@ -64,6 +113,8 @@ contract Account is IERC6551Account, IERC165, IERC1271 {
      * @param  context    Additional data used to determine whether the signer is valid
      * @return magicValue Magic value indicating whether the signer is valid
      */
+
+    // for now just say that the holder of the NFT is a valid signer
     function isValidSigner(
         address signer,
         bytes calldata context
