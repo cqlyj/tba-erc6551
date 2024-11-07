@@ -11,3 +11,9 @@ deploy-registry-anvil:
 
 deploy-registry-sepolia:
 	@forge script script/DeployRegistry.s.sol:DeployRegistry --rpc-url $(SEPOLIA_RPC_URL) --private-key $(PRIVATE_KEY) --broadcast --verify --etherscan-api-key $(ETHERSCAN_API_KEY) --legacy  -vvvv
+
+deploy-accountImplementation-anvil:
+	@forge script script/DeployAccountImplementation.s.sol:DeployAccountImplementation --rpc-url $(ANVIL_RPC_URL) --private-key $(ANVIL_PRIVATE_KEY) --broadcast -vvvv
+
+deploy-accountImplementation-sepolia:
+	@forge script script/DeployAccountImplementation.s.sol:DeployAccountImplementation --rpc-url $(SEPOLIA_RPC_URL) --private-key $(PRIVATE_KEY) --broadcast --verify --etherscan-api-key $(ETHERSCAN_API_KEY) --legacy  -vvvv
