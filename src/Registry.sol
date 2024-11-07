@@ -3,7 +3,6 @@ pragma solidity 0.8.25;
 
 import "lib/erc6551/src/interfaces/IERC6551Registry.sol";
 import "@openzeppelin/contracts/utils/Create2.sol";
-import {Account} from "./Account.sol";
 
 contract Registry is IERC6551Registry {
     /**
@@ -83,6 +82,16 @@ contract Registry is IERC6551Registry {
     /*//////////////////////////////////////////////////////////////
                             HELPER FUNCTION
     //////////////////////////////////////////////////////////////*/
+
+    // The deployed bytecode of each token bound account MUST have the following structure:
+
+    // ERC-1167 Header               (10 bytes) => https://eips.ethereum.org/EIPS/eip-1167#specification
+    // <implementation (address)>    (20 bytes)
+    // ERC-1167 Footer               (15 bytes)
+    // <salt (bytes32)>              (32 bytes)
+    // <chainId (uint256)>           (32 bytes)
+    // <tokenContract (address)>     (32 bytes)
+    // <tokenId (uint256)>           (32 bytes)
 
     function _accountCreationCode(
         address implementation,
