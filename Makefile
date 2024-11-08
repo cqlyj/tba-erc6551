@@ -17,3 +17,6 @@ deploy-accountImplementation-anvil:
 
 deploy-accountImplementation-sepolia:
 	@forge script script/DeployAccountImplementation.s.sol:DeployAccountImplementation --rpc-url $(SEPOLIA_RPC_URL) --private-key $(PRIVATE_KEY) --broadcast --verify --etherscan-api-key $(ETHERSCAN_API_KEY) --legacy  -vvvv
+
+mint-myNft-anvil:
+	@forge script script/MyNftInteractions.s.sol:MintMyNft --rpc-url $(ANVIL_RPC_URL) --private-key $(ANVIL_PRIVATE_KEY) --broadcast -vvvv
