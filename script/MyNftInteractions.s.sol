@@ -13,6 +13,7 @@ contract MintMyNft is Script {
         vm.startBroadcast(anvilAccount);
 
         MyNft myNft = MyNft(mostRecentlyDeployed);
+        // mint to anvilAccount2
         myNft.mint(anvilAccount2);
 
         vm.stopBroadcast();
