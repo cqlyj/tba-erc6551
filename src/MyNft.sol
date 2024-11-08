@@ -15,4 +15,8 @@ contract MyNft is ERC721, Ownable {
         _safeMint(to, s_tokenId);
         s_tokenId++;
     }
+
+    function tokenId() external view returns (uint256) {
+        return s_tokenId;
+    }
 }
