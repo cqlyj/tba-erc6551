@@ -84,4 +84,30 @@ contract RegistryTest is Test {
 
         assertEq(USER.balance, 101e18);
     }
+
+    function testIfNotTBAWillRevert() public {
+        address burnerAccountAddress = registry.createAccount(
+            address(accountImplementation),
+            SALT,
+            block.chainid,
+            address(myNft),
+            myNft.tokenId() - 1
+        );
+
+        // USER mint the NFT tokenId 0
+
+        // let's say transfer 1 ether to the USER
+        bytes memory data = abi.encodeWithSignature(
+            "execute(address,uint256,bytes,uint8)",
+            USER,
+            1e18,
+            "",
+            uint8(0)
+        );
+
+        // since USER not owner the MyNft tokenId 0, it will revert
+        vm.prank(USER);
+        vm.expectRevert(AccountImplementation.Account__InvalidSigner.selector);
+        (bool success, ) = burnerAccountAddress.call{value: 1e18}(data);
+    }
 }
