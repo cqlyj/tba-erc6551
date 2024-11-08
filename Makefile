@@ -1,5 +1,12 @@
 -include .env
 
+all :; install build
+
+install :; @forge install openzeppelin/openzeppelin-contracts --no-commit && forge install cyfrin/foundry-devops --no-commit && forge install erc6551=erc6551/reference --no-commit
+
+build :; @forge build
+
+anvil :; @anvil
 
 deploy-myNft-anvil:
 	@forge script script/DeployMyNft.s.sol:DeployMyNft --rpc-url $(ANVIL_RPC_URL) --private-key $(ANVIL_PRIVATE_KEY) --broadcast -vvvv
